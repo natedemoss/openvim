@@ -1,129 +1,181 @@
+<div align="center">
+
 # openvim
 
-A Neovim distribution with AI built in. It boots plain Neovim against a bundled
-config that adds inline autocomplete (Copilot-style ghost text) with a
-pluggable model backend: **Claude**, **Ollama** (local), or **OpenAI**.
+**A Neovim distribution with AI built in.**
 
-openvim does not fork Neovim's C core. It is a config + plugin layer, so it
-tracks upstream Neovim for free and stays easy to hack on in Lua.
+Inline autocomplete, inline edit, and an agent that edits your code from a command.
+Bring your own model: Claude, a local Ollama model, or OpenAI.
 
-## Requirements
+![Neovim](https://img.shields.io/badge/Neovim-0.10%2B-57A143?logo=neovim&logoColor=white)
+![Lua](https://img.shields.io/badge/Lua-2C2D72?logo=lua&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-- Neovim 0.10+ (uses `vim.system` and inline virtual text)
-- `curl` on PATH
-- An API key for your chosen backend, or a running Ollama server
+</div>
 
-## Run it
+---
 
-Windows (PowerShell):
+openvim is not a fork of Neovim's C core. It is a config and plugin layer that
+boots plain Neovim against a bundled setup, so it tracks upstream Neovim for
+free and stays easy to hack on in pure Lua.
 
-```powershell
-.\bin\openvim.ps1
-```
+## Features
 
-Windows (cmd) or after putting `bin/` on PATH:
+- **Inline autocomplete** Copilot-style ghost text as you type. `<Tab>` to accept.
+- **Inline edit** Select code, describe a change, get it rewritten in place.
+- **`:chat` agent** Tell it what to do and it edits the current file directly.
+- **Pluggable backends** Claude, Ollama (local, free), or OpenAI. Your choice persists.
 
-```cmd
-openvim
-```
-
-macOS / Linux:
+## Quick start
 
 ```sh
-./bin/openvim
-```
+git clone https://github.com/natedemoss/openvim
+cd openvim
 
-Or directly:
-
-```sh
+# pick a backend (see "Models" below), then:
 nvim -u config/init.lua
 ```
 
-## Backends
+Requirements: Neovim 0.10+ and `curl` on PATH.
 
-Pick a provider via env or at runtime.
+### Run it as `openvim`
+
+Put `bin/` on your PATH, then launch with one word:
 
 ```sh
-# Claude (default)
-setx ANTHROPIC_API_KEY "sk-ant-..."      # Windows
-export ANTHROPIC_API_KEY=sk-ant-...      # unix
+openvim
+```
+
+| Platform        | Launcher              |
+|-----------------|-----------------------|
+| Windows (PS)    | `bin\openvim.ps1`     |
+| Windows (cmd)   | `bin\openvim.cmd`     |
+| macOS / Linux   | `bin/openvim`         |
+
+## Backends
+
+Pick a provider once and openvim remembers it (`:OpenvimProvider`, saved to
+`~/.openvim/settings.json`).
+
+```sh
+# Claude (best quality)
+export ANTHROPIC_API_KEY=sk-ant-...
 
 # OpenAI
 export OPENAI_API_KEY=sk-...
 
-# Ollama (local, no key) — pull a code model first:
-ollama pull qwen2.5-coder:1.5b-base   # base = real fill-in-the-middle, fast on CPU
+# Ollama (local, free, private) — see models below
 ```
 
-Choose the default without editing code:
+## Models (Ollama)
+
+openvim uses two kinds of model: a **base** model for autocomplete
+(fill-in-the-middle) and an **instruct** model for `:chat` and inline edit.
+[Qwen2.5-Coder](https://ollama.com/library/qwen2.5-coder) is the best local
+code family right now. Pick a size to match your hardware.
+
+### Autocomplete (base / FIM)
+
+| Model                          | Size  | Best for                          |
+|--------------------------------|-------|-----------------------------------|
+| `qwen2.5-coder:0.5b-base`      | 0.5 GB| CPU-only, snappiest (~1s)         |
+| `qwen2.5-coder:1.5b-base`      | 1.0 GB| CPU with a little patience        |
+| `qwen2.5-coder:3b-base`        | 1.9 GB| light GPU                         |
+| `qwen2.5-coder:7b-base`        | 4.7 GB| GPU, best quality                 |
+
+### Chat + inline edit (instruct)
+
+| Model                          | Size  | Best for                          |
+|--------------------------------|-------|-----------------------------------|
+| `qwen2.5-coder:1.5b`           | 1.0 GB| CPU, quick answers                |
+| `qwen2.5-coder:7b`             | 4.7 GB| balanced quality (GPU recommended)|
+| `qwen2.5-coder:14b`            | 9.0 GB| high quality, needs a real GPU    |
+| `deepseek-coder-v2:16b`        | 8.9 GB| strong alternative                |
 
 ```sh
-OPENVIM_PROVIDER=ollama openvim
+# CPU-friendly default pairing:
+ollama pull qwen2.5-coder:0.5b-base   # autocomplete
+ollama pull qwen2.5-coder:1.5b        # chat / edit
 ```
 
-## Features
+> On a CPU-only machine, use the small base model for autocomplete. A 7B
+> instruct model on CPU can take minutes per response. A GPU changes everything.
 
-### Inline autocomplete
-- Start typing in insert mode. After you pause, ghost text appears.
-- `<Tab>` accepts the suggestion (falls back to a real tab if none is shown).
-- `<C-]>` dismisses it.
+## Usage
+
+### Autocomplete
+Type in insert mode, pause, and ghost text appears. `<Tab>` accepts, `<C-]>` dismisses.
 
 ### Inline edit
-- Select lines in visual mode, press `<leader>ae` (leader is space), type an
-  instruction ("add error handling", "convert to async"), and the selection is
-  rewritten in place.
-- Or `:'<,'>OpenvimEdit make this iterative` on a range.
+Visually select lines, press `<leader>ae` (leader is space), and type an instruction:
 
-### Agent (`:chat`)
-- `:chat <instruction>` sends the whole current file plus your instruction to
-  the model and applies the rewritten file directly to the buffer.
-- Example: `:chat add error handling and a docstring`
-- (Vim requires capitalized commands, so `:Chat` is the real command; `:chat`
-  is wired as an abbreviation to it.)
+```
+add input validation
+```
+
+### `:chat` agent
+Open a file and tell openvim what to change. It rewrites the file in place.
+
+```vim
+:chat add type hints and a docstring
+:chat refactor this into smaller functions
+```
 
 ## Commands
 
-| Command             | Description                          |
-|---------------------|--------------------------------------|
-| `:OpenvimToggle`    | Enable/disable inline autocomplete   |
-| `:OpenvimProvider`  | Switch backend (`claude`/`ollama`/`openai`) |
-| `:OpenvimStatus`    | Show current provider, model, debounce |
-| `:OpenvimEdit`      | AI-edit the selected lines (range)   |
-| `:chat` / `:Chat`   | Agent: edit the whole current file from an instruction |
+| Command             | Description                                       |
+|---------------------|---------------------------------------------------|
+| `:chat` / `:Chat`   | Agent: edit the current file from an instruction  |
+| `:OpenvimEdit`      | AI-edit the selected lines (use a visual range)   |
+| `:OpenvimToggle`    | Enable / disable inline autocomplete              |
+| `:OpenvimProvider`  | Switch backend (`claude` / `ollama` / `openai`)   |
+| `:OpenvimStatus`    | Show current provider, model, and settings        |
 
-## Configure
+## Configuration
 
-Override defaults by editing `config/lua/openvim/init.lua`, or pass a table to
-`setup()`:
+Defaults live in `config/lua/openvim/init.lua`. Override with a table:
 
 ```lua
 require('openvim').setup({
   ai = {
     provider = 'ollama',
     debounce_ms = 250,
-    models = { ollama = 'qwen2.5-coder:1.5b-base' },
+    models      = { ollama = 'qwen2.5-coder:1.5b-base' }, -- autocomplete
+    chat_models = { ollama = 'qwen2.5-coder:7b' },        -- chat / edit
   },
 })
 ```
 
-## Layout
+## How it works
 
 ```
 openvim/
-  bin/openvim(.ps1/.cmd)        launchers
-  config/init.lua               entry point (nvim -u)
+  bin/                  launchers (openvim, .ps1, .cmd)
+  config/init.lua       entry point (nvim -u)
   config/lua/openvim/
-    init.lua                    defaults + branding + setup
-    ai/init.lua                 commands + wiring
-    ai/complete.lua             ghost-text engine
-    ai/backends/                claude.lua, ollama.lua, openai.lua
+    init.lua            defaults, branding, setup
+    dashboard.lua       start screen
+    settings.lua        persisted user settings
+    ai/
+      complete.lua      ghost-text autocomplete engine
+      edit.lua          inline edit on a selection
+      agent.lua         :chat whole-file agent
+      backends/         claude.lua, ollama.lua, openai.lua
 ```
+
+Backends expose two calls: `complete()` for fill-in-the-middle autocomplete and
+`ask()` for instruction-following chat and edits.
 
 ## Roadmap
 
 - [x] Inline autocomplete (ghost text, pluggable backend)
-- [x] Inline edit (select + describe + rewrite)
-- [x] Agent `:chat` (edits the current file in place)
+- [x] Inline edit (select, describe, rewrite)
+- [x] `:chat` agent (edits the current file in place)
 - [ ] Agent tool use (multi-file edits, run commands)
 - [ ] Streaming completions and chat
-- [ ] Per-filetype enable/disable
+- [ ] Per-filetype enable / disable
+
+## License
+
+MIT
