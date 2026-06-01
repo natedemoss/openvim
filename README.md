@@ -173,14 +173,7 @@ openvim/
 Backends expose two calls: `complete()` for fill-in-the-middle autocomplete and
 `ask()` for instruction-following chat and edits.
 
-## Roadmap
 
-- [x] Inline autocomplete (ghost text, pluggable backend)
-- [x] Inline edit (select, describe, rewrite)
-- [x] `:chat` agent (edits the current file in place)
-- [ ] Agent tool use (multi-file edits, run commands)
-- [ ] Streaming completions and chat
-- [ ] Per-filetype enable / disable
 
 ## License
 
