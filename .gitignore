@@ -1,0 +1,10 @@
+# Neovim / editor state
+*.swp
+*.swo
+tags
+
+# OS
+.DS_Store
+Thumbs.db
+
+# openvim local user state (persisted settings live in ~/.openvim)

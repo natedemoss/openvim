@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# openvim launcher (macOS/Linux): boots Neovim against the bundled config.
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+exec nvim -u "$DIR/config/init.lua" "$@"
