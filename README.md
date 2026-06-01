@@ -12,6 +12,12 @@ Bring your own model: Claude, a local Ollama model, or OpenAI.
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
+<br />
+
+<img src="docs/demo.gif" alt="openvim :chat agent editing a file" width="820" />
+
+<sub>`:chat` editing a file in place. Illustrative demo.</sub>
+
 </div>
 
 ---
